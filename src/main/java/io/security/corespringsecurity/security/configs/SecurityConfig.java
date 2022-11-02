@@ -16,6 +16,7 @@ import io.security.corespringsecurity.security.voter.IpAddressVoter;
 import io.security.corespringsecurity.service.SecurityResourceService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.autoconfigure.security.servlet.PathRequest;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -130,6 +131,12 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Override
     public void configure(WebSecurity web) throws Exception {
+        /**
+         * 정적 자원 관리 - WebIgnore 설정
+         * 밑에처럼 작성하면 정적파일들이 시큐리티를 거치지 않고 사용됨
+         * web.ignoring().requestMatchers(PathRequest.toStaticResources().atCommonLocations());
+         *
+         */
         web.ignoring().antMatchers(ignoredMatcherPattern);
     }
 
@@ -139,13 +146,13 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         http
                 .authorizeRequests()
                 .anyRequest().authenticated()
-        .and()
+                .and()
                 .exceptionHandling()
                 .authenticationEntryPoint(new LoginUrlAuthenticationEntryPoint("/login"))
                 .accessDeniedPage("/denied")
                 .accessDeniedHandler(accessDeniedHandler)
 
-        .and()
+                .and()
                 .formLogin()
                 .loginPage("/login")
                 .loginProcessingUrl("/login_proc")
@@ -158,7 +165,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .authenticationDetailsSource(authenticationDetailsSource)
 //                .permitAll()
 
-        .and()
+                .and()
                 .sessionManagement()
 //                .invalidSessionUrl("/users/invalidSession.html")
                 .maximumSessions(1) // -1 : 무제한 로그인 세션 허용
@@ -167,7 +174,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .sessionRegistry(sessionRegistry()).and()
                 .sessionFixation().migrateSession()
 
-        .and()
+                .and()
                 .logout()
                 .logoutSuccessHandler(logoutSuccessHandler)
                 //.logoutRequestMatcher(new AntPathRequestMatcher("/logout")).logoutSuccessUrl("/index")
@@ -176,14 +183,14 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
                 .deleteCookies("SESSION", "JSESSIONID", "remember-me")
 //                .permitAll()
 
-        .and()
+                .and()
                 .rememberMe()
                 .alwaysRemember(true)
                 .rememberMeServices(rememberMeServices)
                 .tokenValiditySeconds(3600)
                 .key("anymobi")
 
-        .and()
+                .and()
                 .addFilterBefore(buildAjaxLoginProcessingFilter(AUTHENTICATION_URL), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(filter, CsrfFilter.class)
                 .addFilterBefore(permitAllFilter(), FilterSecurityInterceptor.class)
@@ -204,7 +211,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     }
 
-    protected AjaxLoginProcessingFilter buildAjaxLoginProcessingFilter(String loginEntryPoint){
+    protected AjaxLoginProcessingFilter buildAjaxLoginProcessingFilter(String loginEntryPoint) {
         AjaxLoginProcessingFilter filter = new AjaxLoginProcessingFilter();
         filter.setAuthenticationManager(ajaxAuthenticationManager());
         return filter;
@@ -263,11 +270,11 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
     @Bean
     public FilterInvocationSecurityMetadataSource urlSecurityMetadataSource(SecurityResourceService securityResourceService) {
-        return new UrlSecurityMetadataSource(urlResourcesMapFactoryBean(securityResourceService).getObject(),securityResourceService);
+        return new UrlSecurityMetadataSource(urlResourcesMapFactoryBean(securityResourceService).getObject(), securityResourceService);
     }
 
     @Bean
-    public UrlResourcesMapFactoryBean urlResourcesMapFactoryBean(SecurityResourceService securityResourceService){
+    public UrlResourcesMapFactoryBean urlResourcesMapFactoryBean(SecurityResourceService securityResourceService) {
         UrlResourcesMapFactoryBean urlResourcesMapFactoryBean = new UrlResourcesMapFactoryBean();
         urlResourcesMapFactoryBean.setSecurityResourceService(securityResourceService);
         return urlResourcesMapFactoryBean;
@@ -296,6 +303,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
         roleHierarchyVoter.setRolePrefix("ROLE_");
         return roleHierarchyVoter;
     }
+
     @Bean
     public RoleHierarchyImpl roleHierarchy() {
         RoleHierarchyImpl roleHierarchy = new RoleHierarchyImpl();
